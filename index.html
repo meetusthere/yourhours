@@ -13,6 +13,8 @@
   .langs button { font: inherit; font-size: 15px; font-weight: 700; padding: 8px 18px; border-radius: 999px; border: 1px solid #5C7799; background: transparent; color: #DDE5EF; cursor: pointer; }
   .langs button.on { background: #fff; color: #1E3A5F; border-color: #fff; }
   .langs button[hidden] { display: none; }
+  .back { display: block; background: #fff; color: #1E3A5F; font-weight: 800; font-size: 17px; text-align: center; text-decoration: none; padding: 14px; border-radius: 14px; margin: 0 0 16px; box-shadow: 0 2px 10px rgba(19, 42, 69, .15); }
+  .back[hidden] { display: none; }
   main { max-width: 440px; margin: 0 auto; padding: 20px 16px 40px; }
   video { width: 100%; border-radius: 18px; background: #132A45; box-shadow: 0 6px 24px rgba(19, 42, 69, .25); }
   p { line-height: 1.5; }
@@ -30,6 +32,7 @@
   </div>
 </header>
 <main>
+  <a class="back" id="back" href="yourhours:///back" hidden></a>
   <video id="v" controls playsinline preload="metadata"></video>
   <p id="p1"></p>
   <p class="small" id="p2"></p>
@@ -39,17 +42,23 @@
   var T = {
     de: { video: 'YourHours-Erklaervideo.mp4', title: 'YourHours – Erklärvideo', tag: 'Deine Stunden. Dein Nachweis.',
       p1: 'Ein Tipp bei Dienstbeginn, einer bei Feierabend. YourHours rechnet Pausen, Soll und Überstunden aus und erstellt deinen Nachweis als PDF oder Excel.',
+      back: '‹ Zurück zur App',
       p2: 'Alle Daten bleiben auf deinem Handy – kein Konto, kein Server. Hilfe in der App jederzeit über das „?“ oben rechts.' },
     en: { video: 'YourHours-Explainer-en.mp4', title: 'YourHours – Explainer video', tag: 'Your hours. Your proof.',
       p1: 'One tap when you start, one when you finish. YourHours works out breaks, target hours and overtime, and creates your record as a PDF or Excel file.',
+      back: '‹ Back to the app',
       p2: 'All data stays on your phone – no account, no server. Help in the app at any time via the “?” at the top right.' },
     pcm: { video: 'YourHours-Explainer-pcm.mp4', title: 'YourHours – Video', tag: 'Your hours. Your proof.',
       p1: 'One touch when you start work, one when you close. YourHours di count break, work time and overtime, and e di make your proof as PDF or Excel.',
+      back: '‹ Go back to di app',
       p2: 'All your data dey only for your phone – no account, no server. For help inside di app, touch di “?” for up, right side.' }
   };
-  var q = new URLSearchParams(location.search).get('lang');
+  var params = new URLSearchParams(location.search);
+  var q = params.get('lang');
+  // aus der App geöffnet → großer Knopf zurück in die App (Sprachwechsel erzeugt keine Verlaufsschritte)
+  var fromApp = params.get('app') === '1';
+  document.getElementById('back').hidden = !fromApp;
   var pcm = q === 'pcm';
-  try { pcm = pcm || localStorage.getItem('yh.pcm') === '1'; if (pcm) localStorage.setItem('yh.pcm', '1'); } catch (e) {}
   if (pcm) document.querySelector('[data-l="pcm"]').hidden = false;
 
   function show(l) {
@@ -59,12 +68,13 @@
     document.getElementById('tag').textContent = t.tag;
     document.getElementById('p1').textContent = t.p1;
     document.getElementById('p2').textContent = t.p2;
+    document.getElementById('back').textContent = t.back;
     v.pause();
     v.poster = 'poster-' + l + '.jpg';
     v.src = t.video;
     v.load();
     document.querySelectorAll('.langs button').forEach(function (b) { b.classList.toggle('on', b.dataset.l === l); });
-    history.replaceState(null, '', '?lang=' + l);
+    history.replaceState(null, '', '?lang=' + l + (fromApp ? '&app=1' : ''));
   }
   document.querySelectorAll('.langs button').forEach(function (b) { b.onclick = function () { show(b.dataset.l); }; });
   show(T[q] ? q : /^de/i.test(navigator.language || '') ? 'de' : 'en');
